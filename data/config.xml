@@ -1,0 +1,74 @@
+<?xml version="1.0">
+<LanderConfig version="1">
+
+<classes>
+
+    <class name="LMDescentStage" canLand="true" canBePiloted="false">
+        <parameters>
+            <dryMass>2169</dryMass>
+            <fullFuelMass>8165</fullFuelMass>
+            <maxMDot>14.56</maxMDot>
+            <Ve>3050</Ve>
+            <landingAlt>3.45</landingAlt>
+        </parameters>
+    </class>
+    
+    <class name="LMAscentStage" canLand="false" canBePiloted="true">
+        <docking>
+            <canDock>CSM</canDock>
+            <canDock>CM</canDock>
+        </docking>
+        <parameters>
+            <dryMass>2317</dryMass>
+            <fullFuelMass>2353</fullFuelMass>
+            <maxMDot>14.56</maxMDot>
+            <Ve>3050</Ve>
+            <landingAlt>0.00</landingAlt>
+        </parameters>
+    </class>
+    
+    <class name="LM" canLand="true" canBePiloted="true">
+        <separates>
+            <class name="LMAscentStage" active="true" fuel="max" xoffset="3.0" yoffset="0.0" thrust="100.0" />
+            <class name="LMDescentStage" active="false" fuel="original" xoffset="-3.0" yoffset="0.0" thrust="0.0" />
+        </separates>
+        <docking>
+            <canDock>CSM</canDock>
+            <canDock>CM</canDock>
+        </docking>
+        <parameters>
+            <dryMass>6531</dryMass>
+            <fullFuelMass>8165</fullFuelMass>
+            <maxMDot>14.56</maxMDot>
+            <Ve>3050</Ve>
+            <landingAlt>3.45</landingAlt>
+        </parameters>
+    </class>
+    
+    <class name="CM" canLand="false" canBePiloted="true">
+        <docking>
+            <canDock>LM</canDock>
+            <canDock>LMAscentStage</canDock>
+        </docking>
+    </class>
+    
+    <class name="SM" canLand="false" canBePiloted="false">
+    </class>
+    
+    <class name="CSM" canLand="false" canBePiloted="true">
+        <separates>
+            <class name="CM" active="true" fuel="max" xoffset="3.0" yoffset="0.0" thrust="100.0" />
+            <class name="SM" active="false" fuel="original" xoffset="-3.0" yoffset="0.0" thrust="0.0" />
+        </separates>
+        <docking>
+            <canDock>LM</canDock>
+            <canDock>LMAscentStage</canDock>
+        </docking>
+    </class>
+
+</classes>
+
+<instances>
+</instances>
+
+</LanderConfig>

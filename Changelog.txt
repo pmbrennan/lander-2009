@@ -1,0 +1,7 @@
+2009-11-24:
+
+* Added "Hold Vertical Rate" mode to autopilot.
+
+2010-10-30:
+
+* Mercurial version control.

@@ -1,0 +1,495 @@
+console show
+catch { destroy .display }
+
+set pi 3.14159265358979323846264338327950288419716939937510
+
+# Radius of the moon in meters
+set rMoon 1737400
+
+# The model
+set M {}
+
+# Viewing parameters
+# This is the default viewport
+# mintheta, maxtheta, minalt, maxalt
+set viewport [list 0 [expr {$::pi * 2}] -100 100]
+
+# Create a terrain point given an angle in radians and a radius
+proc fromThetaR {theta r} {
+    # the list is in this form:
+    # [theta:angle from origin    r:distance from center
+    #  d:downrange distance from origin    alt:altitude
+    #  x:horizontal distance    y:vertical distance]
+    set d [expr {-1.0 * $theta * $::pi * $r} ]
+    #puts "d = $d"
+    set alt [expr {$r - $::rMoon}]
+    #puts "alt = $alt"
+    set x [expr {$r * cos($theta)}]
+    #puts "x = $x"
+    set y [expr {$r * sin($theta)}]
+    #puts "y = $y"
+
+    return [list $theta $r $d $alt $x $y]
+}
+
+# Create a terrain point given an angle in radians and an altitude in meters
+proc fromTRadAlt {thetaRad alt} {
+    set r [expr {$alt + $::rMoon}]
+    return [fromThetaR $thetaRad $r]
+}
+
+# Create a terrain point given an angle in degrees and an altitude in meters
+proc fromTDegAlt {thetaDeg alt} {
+    set r [expr {$alt + $::rMoon}]
+    set theta [expr {$thetaDeg * $::pi / 180.0}]
+    return [fromThetaR $theta $r]
+}
+
+proc makeInitialModel {} {
+    for {set t 0} {$t < 360} {incr t 60} {
+        lappend rv [fromTDegAlt $t 0]
+    }
+    return $rv
+}
+
+proc readModelFromChannel {modelVarName channelId} {
+    upvar 1 $modelVarName model
+    set model {}
+    set data [read $channelId]
+    
+    foreach line [split $data \n] {
+        if {$line == ""} {continue}
+        regsub -all {,} $line " " lineNoCommas
+        #puts "in = {$line} out = {$lineNoCommas}"
+        foreach {theta r d alt x y} $lineNoCommas {break}
+        lappend model [list $theta $r $d $alt $x $y]
+    }
+    
+    # kill the first line
+    set model [lreplace $model 0 0]
+}
+
+proc writeModelToChannel {modelVarName channelId} {
+    upvar 1 $modelVarName model
+    puts $channelId "theta, r, d, alt, x, y"
+    foreach point $model {
+        foreach {theta r d alt x y} $point {break}
+        puts $channelId "$theta, $r, $d, $alt, $x, $y"
+    }
+}
+
+proc readModelFromFile {modelVarName filename} {
+    upvar 1 $modelVarName model
+    set chan [open $filename r]
+    readModelFromChannel model $chan
+    close $chan
+}
+
+proc writeModelToFile {modelVarName filename} {
+    upvar 1 $modelVarName model
+    set chan [open $filename w]
+    writeModelToChannel model $chan
+    close $chan
+}
+
+# subdivideAndDisplace
+# Create a rugged landscape via a recursive process of
+# creating random displacements between each point in the
+# model.  Each point is displaced up to [distance] meters
+# away from its current location.  The algorithm is applied
+# recursively, with a smaller step size.
+#
+# I get very interesting results with a distance=3000 and levels=10.
+proc subdivideAndDisplace {modelVarName distance levels} {
+    puts "distance = $distance, levels = $levels"
+    upvar 1 $modelVarName model
+    set newmodel {}
+    set halfdistance [expr {$distance / 2}]
+    set firstpoint [lindex $model 0]
+    
+    while {[llength $model] > 0} {
+        set thispoint [lindex $model 0]
+        if {[llength $model] > 1} {
+            set nextpoint [lindex $model 1]
+        } else {
+            set nextpoint $firstpoint
+        }
+         
+        # pop the first element off the model
+        set model [lreplace $model 0 0]
+        
+        foreach {theta1 r1 d1 alt1 x1 y1} $thispoint {break}
+        foreach {theta2 r2 d2 alt2 x2 y2} $nextpoint {break}
+        
+        if {$theta2 < $theta1} {
+            set theta2 [expr {$theta2 + 2 * $::pi}]
+        }
+        
+        lappend newmodel $thispoint
+        
+        set thetaNew [expr {($theta1 + $theta2)/2}]
+        set rNew [expr {($r1 + $r2) / 2 + rand() * $distance - $halfdistance}]
+        
+        lappend newmodel [fromThetaR $thetaNew $rNew]
+    }
+    
+    set model $newmodel
+    
+    if {$levels > 0} {
+        subdivideAndDisplace model \
+            [expr {$distance / 2}] [expr {$levels - 1}]
+    }
+}
+
+proc downSample {modelVarName factor} {
+    upvar 1 $modelVarName model
+    set newmodel {}
+    set factorm1 [expr {$factor - 1}]
+    if {$factor <= 1} {return}
+    
+    # Always keep the first element
+    lappend newmodel [lindex $model 0]
+    set model [lreplace $model 0 0]
+    
+    while {[llength $model] > 0} {
+        set count 0
+        set theta 0
+        set rad 0
+        while {($count < $factorm1)&&($count < [llength $model])} {
+            set point [lindex $model $count]
+            foreach {thetap rp d alt x y} $point {break}
+            set theta [expr {$theta + $thetap}]
+            set rad [expr {$rad + $rp}]
+            incr count
+        }
+        lappend newmodel [fromThetaR [expr {$theta/$count}] [expr {$rad/$count}]]
+        set model [lreplace $model 0 [expr {$count - 1}]]
+    }
+    
+    set model $newmodel
+}
+
+# return a vector of all zero crossings of the model.  If they need to be
+# interpolated, they will be.  
+proc zeroCrossings {model} {
+    set rv {}
+    set lasttheta -1
+    set firstpointloaded 0
+    foreach point $model {
+        foreach {theta r d alt x y} $point {break}
+        if {$alt == 0} {
+            if {$lasttheta != 0} {
+                lappend rv $theta
+            }
+        } elseif {$firstpointloaded} {
+            if {(($alt > 0)&&($lastalt < 0))||(($alt < 0)&&($lastalt > 0))} {
+                # Compute the intersection point and store it
+                set dalt [expr {$alt - $lastalt}]
+                set dtheta [expr {$theta - $lasttheta}]
+                set newtheta [expr {($dtheta/$dalt) * (-1.0 * $lastalt) + $lasttheta}]
+                lappend rv $newtheta
+            }
+        }
+        set lasttheta $theta
+        set lastr $r
+        set lastd $d
+        set lastalt $alt
+        set lastx $x
+        set lasty $y
+        set firstpointloaded 1
+    }
+    return $rv
+}
+
+# fill in any parts of the landscape which are under the nominal altitude.
+# rewrite this
+proc fillAllMaria {modelVarName} {
+    upvar 1 $modelVarName model
+    foreach point $model {
+        foreach {theta r d alt x y} $point {break}
+        if {$alt > -1} {
+            lappend newmodel $point
+        }
+    }
+    
+    set model $newmodel
+}
+
+# return the index which is either exactly on, or just to the left of, a given theta.
+# return -1 if we can't find a good index
+proc getLeftIndex {model itheta {startIndex 0}} {
+    set len [llength $model]
+    for {set idx $startIndex} {$idx < $len} {incr idx} {
+        foreach {theta r d alt x y} [lindex $model $idx] {break}
+        if {$theta > $itheta} {
+            return [expr {$idx - 1}]
+        }
+    }
+    return [expr {$idx - 1}]
+}
+
+# return the index which is either exactly on, or just to the right of, a given theta.
+# return -1 if we can't find a good index
+proc getRightIndex {model itheta {startIndex 0}} {
+    set len [llength $model]
+    for {set idx $startIndex} {$idx < $len} {incr idx} {
+        foreach {theta r d alt x y} [lindex $model $idx] {break}
+        if {$theta >= $itheta} {
+            return $idx
+        }
+    }
+    return -1
+}
+
+# return the interpolated radius at a given theta, plus the indices
+# bracketing it:
+# {rad index1 index2}
+proc getRadiusAt {model theta} {
+    set t1 [getLeftIndex $model $theta]
+    set t2 [getRightIndex $model $theta]
+    
+    if {$t1 == -1 || $t2 == -1} {
+        error "Can't find theta $theta"
+    }
+    
+    set point1 [lindex $model $t1]
+    set point2 [lindex $model $t2]
+    
+    foreach {theta1 r1 d1 alt1 x1 y1} $point1 {break}
+    foreach {theta2 r2 d2 alt2 x2 y2} $point2 {break}
+    
+    if {$theta2 == $theta1 || $theta == $theta1} {
+        set rad $r1
+    } else {
+        set rad [expr { $r1 + (($r2 - $r1) / ($theta2 - $theta1)) * ($theta - $theta1) } ]
+    }
+    
+    return [list $rad $t1 $t2]
+}
+
+proc getAltAt {model theta} {
+    foreach {rad idx1 idx2} [getRadiusAt $model $theta] {break}
+    set alt [expr {$rad - $::rMoon}]
+    return [list $alt $idx1 $idx2]
+}
+
+proc getAverageAlt {model} {
+    set altaccum 0
+    set npoints 0
+    foreach point $model {
+        foreach {theta r d alt x y} $point {break}
+        set altaccum [expr {$altaccum + $alt}]
+        incr npoints
+    }
+    if {$npoints > 0} {
+        return [expr {$altaccum / $npoints}]
+    } else {
+        return 0
+    }        
+}
+
+# Raise or lower the entire model by a certain value
+proc biasModel {modelVarName biasValue} {
+    upvar 1 $modelVarName model
+    if {$biasValue == 0} {return}
+    set newmodel {}
+    foreach point $model {
+        foreach {theta r d alt x y} $point {break}
+        set r [expr {$r + $biasValue}]
+        lappend newmodel [fromThetaR $theta $r]
+    }
+    set model $newmodel
+    puts "Done"
+}
+
+proc scaleModel {modelVarName scaleValue} {
+    upvar 1 $modelVarName model
+    if {$scaleValue == 0} {return}
+    if {$scaleValue == 1} {return}
+    set newmodel {}
+    foreach point $model {
+        foreach {theta r d alt x y} $point {break}
+        set alt [expr {$alt * $scaleValue}]
+        lappend newmodel [fromTRadAlt $theta $alt]
+    }
+    set model $newmodel
+    puts "Done"
+}
+
+# Flatten the region between theta1 and theta2 (using
+# average radius of the two endpoints.
+proc addFlat {modelVarName theta1 theta2 {useAltitude 0} {altitude 0} } {
+    puts "useAltitude = $useAltitude, altitude = $altitude"
+    upvar 1 $modelVarName model
+    foreach {r1 t11 t12} [getRadiusAt $model $theta1] {break}
+    foreach {r2 t21 t22} [getRadiusAt $model $theta2] {break}
+    set r [expr {($r1 + $r2) / 2}]
+    if {$useAltitude} {
+        set point1 [fromTRadAlt $theta1 $altitude]
+        set point2 [fromTRadAlt $theta2 $altitude]
+    } else {
+        set point1 [fromThetaR $theta1 $r]
+        set point2 [fromThetaR $theta2 $r]
+    }
+    set model [lreplace $model $t12 $t21 $point1 $point2]
+    puts "done"
+}
+
+proc addCrater {modelVarName radius position} {
+    upvar 1 $modelVarName model
+    set startangle $::pi
+    set endangle [expr {2 * $::pi}]
+    set anglestep [expr {$::pi/20}]
+    
+    set dtheta [expr {$radius / $::rMoon}]
+    set lefttheta [expr {$position - $dtheta}]
+    set righttheta [expr {$position + $dtheta}]
+    foreach {centerradius idx idx} [getRadiusAt $model $position] {break}
+    foreach {leftradius idxleft1 idxleft2} [getRadiusAt $model $lefttheta] {break}
+    foreach {rightradius idxright1 idxright2} [getRadiusAt $model $righttheta] {break}
+    
+    set newmodel [lrange $model 0 $idxleft1]
+    set newmodelRight [lrange $model $idxright2 end]
+    for {set angle $startangle} {$angle <= $endangle} {set angle [expr {$angle + $anglestep}]} {
+        set x [expr {$position + ($radius * cos($angle))/$::rMoon}]
+        set y [expr {$centerradius + ($radius * sin($angle))}]        
+        
+        lappend newmodel [fromThetaR $x $y]
+    }
+    
+    foreach point $newmodelRight {
+        lappend newmodel $point
+    }
+    set model $newmodel
+    puts "done"
+}
+
+proc addCanyon {width depth position} {
+}
+
+proc addMaria {width position} {
+}
+
+# build the mountain over existing terrain 
+# (i.e. a mountain of height 5 in a canyon of 3 will have a final 
+# altitude of 2)
+proc addMountain {width height position} {
+}
+
+proc smooth {factor} {
+}
+
+proc getMaxima {model} {
+    set min 0
+    set max 0
+    foreach point $model {
+        foreach {t r d alt x y} $point {break}
+        if {$alt < $min} {set min $alt}
+        if {$alt > $max} {set max $alt}
+    }
+    return [list $min $max]
+}
+
+proc draw {w model} {
+    global verticalscalefactor horizontalscalefactor hdisp wdisp ycenter
+    $w delete all
+
+    set modellen [llength $model]
+    #puts "modellen = $modellen"
+
+    # Get dimensions of the window
+    set hdisp [winfo height $w ]
+    set wdisp [winfo width $w ]
+    
+    # Draw the grey line across the center
+    set ycenter [expr {$hdisp / 2}]
+    $w create line 0 $ycenter $wdisp $ycenter -fill "darkgrey"
+    
+    if {$model != "x"} {
+        #puts "Getting extents..."
+        foreach {minalt maxalt} [getMaxima $model] {break}
+        #puts "Got $minalt, $maxalt"
+        set minalt [expr {abs($minalt)}]
+        if {$maxalt < $minalt} {
+            set maxalt $minalt
+        }
+        if {$maxalt < 100} {
+            set maxalt 100
+        } else {
+            set maxalt [expr {$maxalt * 1.1}]
+        }
+        set verticalscalefactor [expr {-1.0 * $hdisp / (2 * $maxalt)}] ; # pixels/m
+        set horizontalscalefactor [expr {$wdisp / (2 * $::pi)}] ; # pixels/radian
+
+        set idx 0
+        set theta2 0
+        set alt2 0
+        foreach point $model {
+            #puts "idx = $idx"
+            set theta1 $theta2
+            set alt1 $alt2
+            foreach {theta2 rr dd alt2 xx yy} $point {}
+            if {$idx != 0} {
+
+                set x1 [expr {$theta1 * $horizontalscalefactor}]
+                set x2 [expr {$theta2 * $horizontalscalefactor}]
+                set y1 [expr {$ycenter + $alt1 * $verticalscalefactor}]
+                set y2 [expr {$ycenter + $alt2 * $verticalscalefactor}]
+
+                $w create line $x1 $y1 $x2 $y2 -fill "white"
+            }
+            incr idx
+        }
+    }
+}
+
+proc canvasCoordsToThetaAlt {w x y} {
+    global verticalscalefactor horizontalscalefactor hdisp wdisp ycenter
+    
+    if {![info exist verticalscalefactor]} {
+        return {0 0}
+    }
+    
+    set theta [expr {$x / $horizontalscalefactor}]
+    set alt [expr {($y - $ycenter) / $verticalscalefactor }]
+    
+    return [list $theta $alt]
+}
+    
+
+canvas .display -bg black
+grid .display -padx 2 -pady 2 -sticky nsew
+grid columnconfigure . 0 -weight 1
+grid rowconfigure . 0 -weight 1
+bind .display <Configure> {draw .display $::M}
+bind .display <ButtonPress-1> {
+    set theta_alt [canvasCoordsToThetaAlt .display %x %y]
+    puts "theta,alt = {$theta_alt}"
+}
+
+#trace add variable ::M write {draw .display $::M}
+
+proc redraw {} {draw .display $::M}
+
+proc reload {} {
+    readModelFromFile ::M "terrain001.csv"
+    redraw
+}
+
+redraw
+
+proc toRadians {degrees} {
+    set radians [expr {$degrees/57.2957795132}]
+}
+
+
+proc rdrAlt { latDegrees dtmAltitude } {
+    set latRadians [toRadians $latDegrees]
+    set terrainAlt [lindex [getAltAt $::M $latRadians] 0]
+    return [expr {$dtmAltitude - $terrainAlt}]
+}
+
+    
+# subdivideAndDisplace M 500 3
+# reload
+# writeModelToFile M terrain001.csv

@@ -1,0 +1,2 @@
+Manifest-Version: 2.3
+Main-Class: "net/pbrennan/Lander_2009/TestLMRunner2"
