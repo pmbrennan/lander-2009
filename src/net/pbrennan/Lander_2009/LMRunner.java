@@ -213,22 +213,31 @@ public class LMRunner
         else
             n = nIntegrations[3];
 
+        System.out.println("updateModel: Performing integrations...");
+        
         // do integration(s)
         for (int i=0 ; i<n ; ++i)
+        {
             m_lm.step(h);
+        }
 
         // predict orbit
+        System.out.println("LMRunner.updateModel: Predicting orbital parameters...");
         m_lm.PredictOrbitalParameters();
 
         // transform into polar frame
+        System.out.println("LMRunner.updateModel: Computing polar frame...");
         m_lm.ComputePolarFrame();
     }
 
     public synchronized void tick(double seconds)
     {
 		if (!m_paused)
+		{
 			updateModel();
+		}
 
+		System.out.println("LMRunner.tick: done with updateModel(), putting event...");
 		m_perfmon.putEvent();
     }
 

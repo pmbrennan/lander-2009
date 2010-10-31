@@ -432,6 +432,7 @@ public class LunarSpacecraft2D implements IDerivableVec
         double vx = m_state.vec[3];
         double vy = m_state.vec[4];
 
+        System.out.println("LunarSpacecraft2D: calling normalizeAngle...");
         m_theta = normalizeAngle(Math.atan2(y,x));
         double rsquared = x*x + y*y;
         m_radius = Math.sqrt(rsquared);
@@ -456,10 +457,13 @@ public class LunarSpacecraft2D implements IDerivableVec
         // local acceleration of gravity
         m_localG = MoonMu / rsquared;
 
+        System.out.println("LunarSpacecraft2D: calling getTerrainAltitude...");
         m_terrainAltitude = m_Terrain.getTerrainAltitude(m_theta, m_state.vec[0], m_state.vec[1]);
         m_terrainAltitudeOK = true;
         
+        System.out.println("LunarSpacecraft2D: calling getTerrainNormalAngle...");
         m_terrainNormalAngle = m_Terrain.getTerrainNormalAngle(m_state.vec[0], m_state.vec[1]);
+        System.out.println("LunarSpacecraft2D: finished getTerrainNormalAngle...");
 
         if (m_status != Status.InFlight)
         {
@@ -475,6 +479,7 @@ public class LunarSpacecraft2D implements IDerivableVec
 
         if (m_TargetSet)
         {
+            System.out.println("LunarSpacecraft2D: calling absAngleDifference...");
             m_DistanceToTarget = LanderUtils.absAngleDifference(m_TargetLong, m_theta) * MoonRadius;
         }
         else
@@ -859,10 +864,13 @@ public class LunarSpacecraft2D implements IDerivableVec
             return;
         }
 
+        //System.out.println("LunarSpacecraft2D.step: Stepping the autopilot...");
         stepAutopilot(h);
 
+        //System.out.println("LunarSpacecraft2D.step: Stepping the throttle...");
         stepThrottle(h);
 
+        //System.out.println("LunarSpacecraft2D.step: Stepping the collider...");
         stepCollision(h);
 
         if (m_status == Status.Landed)
@@ -904,6 +912,7 @@ public class LunarSpacecraft2D implements IDerivableVec
     // perform step using fourth-order Runge-Kutta integration.
     public void stepRK4(double h)
     {
+        //System.out.println("Calling step() function...");
         m_Integrator.step(m_time, h, m_state, this);
     }
 

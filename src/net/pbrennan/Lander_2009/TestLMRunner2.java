@@ -257,12 +257,17 @@ public class TestLMRunner2 extends JFrame implements Runnable
                     resetScenario();
                 }
 
+                System.out.println("TestLMRunner2.run: ticking model...");
                 m_runner.tick(0.05);
+                System.out.println("TestLMRunner2.run: Done ticking model...");
 
                 if (!paused_lastFrame)
                 {
                     m_data = m_runner.getInstrumentData(m_data);
                     m_data.SetRadarOn(m_controls.GetRadarOn());
+                    
+                    System.out.println("TestLMRunner2.run: sending data...");
+                    
                     m_data.send();
                     m_sideview.setScalingMode(m_controls.GetScalingMode());
                     
@@ -291,6 +296,9 @@ public class TestLMRunner2 extends JFrame implements Runnable
                     }
                     
                     m_sideview.setHelpDisplay(help_thisFrame);
+                    
+                    System.out.println("TestLMRunner2.run: Repainting...");
+                    
                     m_sideview.repaint();
                 }
                 

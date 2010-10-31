@@ -25,10 +25,10 @@ import java.awt.geom.AffineTransform;
 public class SideView4 extends JPanel implements ILMInstrumentDataListener, ILMEventListener
 {
     /**
-	 *
-	 */
-	private static final long serialVersionUID = 6118089846830900268L;
-	private static final boolean DISPLAY_PERFORMANCE_DATA = false;
+     *
+     */
+    private static final long serialVersionUID = 6118089846830900268L;
+    private static final boolean DISPLAY_PERFORMANCE_DATA = false;
     private static final boolean PAINT_TERRAIN = true;
     private static final boolean USE_DIGITAL_FONT = true;
     private static final boolean ADVANCED_DISPLAY = true;
@@ -46,36 +46,36 @@ public class SideView4 extends JPanel implements ILMInstrumentDataListener, ILME
     
     private static final int DEFAULT_WIDTH = 1400;
     private static final int DEFAULT_HEIGHT = 1000;
-	private int mWidth;
-	private int mHalfWidth;
-	private int mHeight;
-	private int mHalfHeight;
+    private int mWidth;
+    private int mHalfWidth;
+    private int mHeight;
+    private int mHalfHeight;
+    
+    private int mEventDisplayWidth;  
+    private int mEventDisplayHeight; 
+    private int mEventDisplayX; 
+    private int mEventDisplayY; 
+    
+    private void setDimensions(int width, int height)
+    {
+	System.out.println("setDimensions(" + width + "," + height + ")");
 	
-	private int mEventDisplayWidth;  
-	private int mEventDisplayHeight; 
-	private int mEventDisplayX; 
-	private int mEventDisplayY; 
-
-	private void setDimensions(int width, int height)
-	{
-	    System.out.println("setDimensions(" + width + "," + height + ")");
+	Toolkit tk = java.awt.Toolkit.getDefaultToolkit();
+	Dimension dim = tk.getScreenSize();
 	    
-	    Toolkit tk = java.awt.Toolkit.getDefaultToolkit();
-	    Dimension dim = tk.getScreenSize();
-	    
-	    if (width == -1)
-	        width = dim.width - 50;
-	    if (height == -1)
-	        height = dim.height - 50;
-	    
-	    if (width < MIN_WIDTH)
-	        width = MIN_WIDTH;
-	    if (width > MAX_WIDTH)
-	        width = MAX_WIDTH;
-	    if (height < MIN_HEIGHT)
-	        height = MIN_HEIGHT;
-	    if (height > MAX_HEIGHT)
-	        height = MAX_HEIGHT;
+	if (width == -1)
+	    width = dim.width - 50;
+	if (height == -1)
+	    height = dim.height - 50;
+	
+	if (width < MIN_WIDTH)
+	    width = MIN_WIDTH;
+	if (width > MAX_WIDTH)
+	    width = MAX_WIDTH;
+	if (height < MIN_HEIGHT)
+	    height = MIN_HEIGHT;
+	if (height > MAX_HEIGHT)
+	    height = MAX_HEIGHT;
 	    
 		mWidth = width;
 		mHeight = height;
@@ -1170,7 +1170,8 @@ public class SideView4 extends JPanel implements ILMInstrumentDataListener, ILME
         AffineTransform t1 = AffineTransform.getTranslateInstance(-r, -r);
         AffineTransform r1 = AffineTransform.getRotateInstance(alpha);
         AffineTransform s1 = AffineTransform.getScaleInstance(s,s);
-        AffineTransform t2 = AffineTransform.getTranslateInstance(m_mooncenter.vec[0], m_mooncenter.vec[1]);
+        AffineTransform t2 = AffineTransform.getTranslateInstance(
+			         m_mooncenter.vec[0], m_mooncenter.vec[1]);
         r1.concatenate(t1);
         s1.concatenate(r1);
         t2.concatenate(s1);

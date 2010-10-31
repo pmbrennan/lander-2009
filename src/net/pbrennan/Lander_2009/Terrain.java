@@ -211,10 +211,12 @@ public class Terrain
         return 0;
     }
     
-    // -------------------------------------------------------------------
-    // Given the position of the LM in the
-    // world frame, return the normal angle for the correct terrain 
-    // line segment.
+    /**
+     * Given the position of the LM in the
+     * world frame, return the normal angle for the correct terrain 
+     * line segment.
+     */
+    // TODO: this function is hanging sometimes. How?
     public double getTerrainNormalAngle(double lmXWorld, double lmYWorld)
     {
         double thetaRadians = Math.atan2(lmYWorld, lmXWorld);
@@ -222,19 +224,35 @@ public class Terrain
         {
             thetaRadians += LanderUtils.PI2;
         }
-        int m_interpolation_index_left;
-        for (m_interpolation_index_left = 0; m_interpolation_index_left < thetaArray.length; ++m_interpolation_index_left)
+        int index;
+        int nIndices = thetaArray.length;
+        for (index = 0; index < nIndices; ++index)
         {
-            if (thetaArray[m_interpolation_index_left] > thetaRadians)
+            if (thetaArray[index] > thetaRadians)
             {
-                --m_interpolation_index_left;
+                --index;
                 break;
             }
         }
-        if (m_interpolation_index_left < thetaArray.length)
-            --m_interpolation_index_left;
         
-        return normAngleArray[m_interpolation_index_left];
+        // TODO: This logic SUCKS! Improve it.
+        if (index < nIndices)
+        {
+            --index;
+        }
+        
+        if (index < 0)
+        {
+            index += nIndices;
+        }
+        
+        if (index >= nIndices) 
+        {
+            index -= nIndices;
+        }
+        
+        System.out.println("Terrain.getTerrainNormalAngle: index = " + index);
+        return normAngleArray[index];
     }
 
     // --------------------------------------------------------------------
@@ -307,14 +325,18 @@ public class Terrain
     // centerRadians + marginRadians and
     // centerRadians - marginRadians
     public void drawWithWindow(Graphics2D g,
-                               int centerX, int centerY,  // Center point of the moon, in screen coordinates
-                               double scale_ppm,
-                               double rotation,
-                               double centerRadians,
-                               double marginRadians,
-                               int WIDTH,
-                               int HEIGHT,
-                               Color fillColor)
+			       // Center point of the moon, 
+			       // in screen coordinates (pixels)
+                   int centerX, int centerY,  
+                   double scale_ppm, // scale, pix/meter
+			       // rotation of view wrt world in radians
+                   double rotation, 
+			       // center point of the view in radians
+                   double centerRadians,
+                   double marginRadians,
+                   int WIDTH,
+                   int HEIGHT,
+                   Color fillColor)
     {
         if (workx == null)
         {
@@ -323,10 +345,12 @@ public class Terrain
         }
 
         // Find the window
-        // TODO: Cache this information, next frame it will be easier to keep this up
-        // to date.
+        // TODO: Cache this information, next frame it
+        // will be easier to keep this up to date.
         int m_center_index;
-        for (m_center_index = 0; m_center_index < thetaArray.length; ++m_center_index)
+        for (m_center_index = 0; 
+	         m_center_index < thetaArray.length; 
+	         ++m_center_index)
         {
             if (thetaArray[m_center_index] > centerRadians)
                 break;
@@ -334,6 +358,7 @@ public class Terrain
 
         //System.out.println("m_center_index = " + m_center_index);
 
+        // TODO: I suspect I have a hang in one of these two loops.
         int m_left_index = m_center_index - 1;
         boolean m_left_wrap = false;
         while (true)
@@ -344,7 +369,13 @@ public class Terrain
                 m_left_wrap = true;
             }
 
-            if (LanderUtils.absAngleDifference(centerRadians, thetaArray[m_left_index])
+            if (m_left_wrap && (m_left_index == m_center_index))
+            {
+                break;
+            }
+
+            if (LanderUtils.absAngleDifference(centerRadians, 
+					       thetaArray[m_left_index])
                 > marginRadians)
                 break;
 
@@ -361,7 +392,13 @@ public class Terrain
                 m_right_wrap = true;
             }
 
-            if (LanderUtils.absAngleDifference(centerRadians, thetaArray[m_right_index])
+            if (m_right_wrap && (m_right_index == m_center_index))
+            {
+                break;
+            }
+
+            if (LanderUtils.absAngleDifference(centerRadians, 
+					       thetaArray[m_right_index])
                 > marginRadians)
                 break;
 
@@ -379,8 +416,10 @@ public class Terrain
             double x = xArray[src_index];
             double y = yArray[src_index];
 
-            workx[dest_index] = centerX + (int)(Math.round(scale_ppm * (x * C - y * S)));
-            worky[dest_index] = centerY - (int)(Math.round(scale_ppm * (x * S + y * C)));
+            workx[dest_index] = centerX + 
+                (int)(Math.round(scale_ppm * (x * C - y * S)));
+            worky[dest_index] = centerY - 
+                (int)(Math.round(scale_ppm * (x * S + y * C)));
 
             ++point_count;
             ++dest_index;
@@ -404,8 +443,6 @@ public class Terrain
         // Draw or fill the polygon.
         //g.drawPolygon(workx, worky, point_count);
         g.fillPolygon(workx, worky, point_count);
-
-
     }
 
     private StringBuilder sb = new StringBuilder();
