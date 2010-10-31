@@ -14,13 +14,13 @@ import java.awt.image.BufferedImage;
 import java.lang.StringBuilder;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.util.ArrayList;
 
 import javax.swing.JPanel;
 
 import net.pbrennan.Lander_2009.LunarSpacecraft2D.OrbitType;
 
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 
 public class SideView4 extends JPanel implements ILMInstrumentDataListener, ILMEventListener
 {
@@ -42,8 +42,6 @@ public class SideView4 extends JPanel implements ILMInstrumentDataListener, ILME
     public static final int MIN_HEIGHT = 700;
     public static final int MAX_HEIGHT = 1000;
     
-    
-    
     private static final int DEFAULT_WIDTH = 1400;
     private static final int DEFAULT_HEIGHT = 1000;
     private int mWidth;
@@ -58,24 +56,24 @@ public class SideView4 extends JPanel implements ILMInstrumentDataListener, ILME
     
     private void setDimensions(int width, int height)
     {
-	System.out.println("setDimensions(" + width + "," + height + ")");
-	
-	Toolkit tk = java.awt.Toolkit.getDefaultToolkit();
-	Dimension dim = tk.getScreenSize();
-	    
-	if (width == -1)
-	    width = dim.width - 50;
-	if (height == -1)
-	    height = dim.height - 50;
-	
-	if (width < MIN_WIDTH)
-	    width = MIN_WIDTH;
-	if (width > MAX_WIDTH)
-	    width = MAX_WIDTH;
-	if (height < MIN_HEIGHT)
-	    height = MIN_HEIGHT;
-	if (height > MAX_HEIGHT)
-	    height = MAX_HEIGHT;
+    	System.out.println("setDimensions(" + width + "," + height + ")");
+    	
+    	Toolkit tk = java.awt.Toolkit.getDefaultToolkit();
+    	Dimension dim = tk.getScreenSize();
+    	    
+    	if (width == -1)
+    	    width = dim.width - 50;
+    	if (height == -1)
+    	    height = dim.height - 50;
+    	
+    	if (width < MIN_WIDTH)
+    	    width = MIN_WIDTH;
+    	if (width > MAX_WIDTH)
+    	    width = MAX_WIDTH;
+    	if (height < MIN_HEIGHT)
+    	    height = MIN_HEIGHT;
+    	if (height > MAX_HEIGHT)
+    	    height = MAX_HEIGHT;
 	    
 		mWidth = width;
 		mHeight = height;
@@ -143,7 +141,8 @@ public class SideView4 extends JPanel implements ILMInstrumentDataListener, ILME
         }
 
         m_EventDisplay = new EventDisplay(mEventDisplayWidth, mEventDisplayHeight, m_EventFont);
-        m_EventDisplay.put("Welcome to Lunar Lander!\n");
+        m_EventDisplay.put("Welcome to Lunar Lander!");
+        m_EventDisplay.put("Press F1 for help.");
 
         m_symbols = new DecimalFormatSymbols();
         m_symbols.setDecimalSeparator('.');
@@ -1391,6 +1390,9 @@ public class SideView4 extends JPanel implements ILMInstrumentDataListener, ILME
         drawDigitalDisplays(g);        
         
         m_EventDisplay.draw(g, mEventDisplayX, mEventDisplayY);
+        
+        // Paint a cue for the view mode
+        drawViewModeCue(g);
 
         // Paint the help display
         if (m_displayHelp)
@@ -1536,6 +1538,41 @@ public class SideView4 extends JPanel implements ILMInstrumentDataListener, ILME
     {
         m_displayHelp = showhelp;
     }
+    
+    public void drawViewModeCue(Graphics g)
+    {
+        Graphics2D g2d = (Graphics2D)g;
+        g2d.setFont(m_font);
+        
+        FontMetrics fm = g2d.getFontMetrics();
+        
+        String displayString = "View Mode: ";
+        // TODO: This couples the scaling mode to the key and should therefore be refactored.
+        switch (m_scalingMode)
+        {
+            case LM_ALL_MOON:
+                displayString += "[[ 1-All ]]  2-Dynamic  3-Surface  4-LM";
+                break;
+            case LM_SURFACE:
+                displayString += "1-All  2-Dynamic  [[ 3-Surface ]]  4-LM";
+                break;
+            case LM_MAX:
+                displayString += "1-All  2-Dynamic  3-Surface  [[ 4-LM ]]";
+                break;
+            case LM_TARGET:
+                displayString += "1-All  [[ 2-Dynamic ]]  3-Surface  4-LM";
+                break;
+            default:
+                displayString = "unknown";
+                break;
+        }
+        
+        Rectangle2D bounds = fm.getStringBounds(displayString, g2d);
+        
+        g2d.drawString(displayString, 0, mHeight - (int)(Math.floor(bounds.getHeight())));
+       
+    }
 }
+
 
 

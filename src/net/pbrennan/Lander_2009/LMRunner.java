@@ -178,12 +178,6 @@ public class LMRunner
         // TODO: Add whatever other information we want to go into the 
         // data packet.
 
-
-
-
-
-
-
         return data;
     }
 
