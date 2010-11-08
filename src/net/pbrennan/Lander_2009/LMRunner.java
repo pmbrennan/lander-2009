@@ -6,7 +6,7 @@ import java.awt.Color;
 
 public class LMRunner
 {
-    private static final int UPDATE_RATE=20; // updates/second
+    private static final int UPDATE_RATE = TestLMRunner2.TARGET_FRAME_RATE; // updates/second
     private static final int MS_PER_UPDATE=1000 / UPDATE_RATE; // milliseconds per update
 
     // for 1x, 10x, 100x, and 1000x
@@ -207,7 +207,7 @@ public class LMRunner
         else
             n = nIntegrations[3];
 
-        System.out.println("updateModel: Performing integrations...");
+        //System.out.println("updateModel: Performing integrations...");
         
         // do integration(s)
         for (int i=0 ; i<n ; ++i)
@@ -216,23 +216,23 @@ public class LMRunner
         }
 
         // predict orbit
-        System.out.println("LMRunner.updateModel: Predicting orbital parameters...");
+        //System.out.println("LMRunner.updateModel: Predicting orbital parameters...");
         m_lm.PredictOrbitalParameters();
 
         // transform into polar frame
-        System.out.println("LMRunner.updateModel: Computing polar frame...");
+        //System.out.println("LMRunner.updateModel: Computing polar frame...");
         m_lm.ComputePolarFrame();
     }
 
     public synchronized void tick(double seconds)
     {
-		if (!m_paused)
-		{
-			updateModel();
-		}
+	if (!m_paused)
+	{
+	    updateModel();
+	}
 
-		System.out.println("LMRunner.tick: done with updateModel(), putting event...");
-		m_perfmon.putEvent();
+	//System.out.println("LMRunner.tick: done with updateModel(), putting event...");
+	m_perfmon.putEvent();
     }
 
     protected LunarSpacecraft2D     m_lm;

@@ -193,7 +193,8 @@ proc applyscale {xname mul} {
     set x $newx
 }
 
-console show
+# Windows only
+# console show
 canvas .c -bg "black"
 grid .c -sticky nsew
 grid columnconfigure . 0 -weight 1

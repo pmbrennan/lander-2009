@@ -432,7 +432,7 @@ public class LunarSpacecraft2D implements IDerivableVec
         double vx = m_state.vec[3];
         double vy = m_state.vec[4];
 
-        System.out.println("LunarSpacecraft2D: calling normalizeAngle...");
+        //System.out.println("LunarSpacecraft2D: calling normalizeAngle...");
         m_theta = normalizeAngle(Math.atan2(y,x));
         double rsquared = x*x + y*y;
         m_radius = Math.sqrt(rsquared);
@@ -457,13 +457,13 @@ public class LunarSpacecraft2D implements IDerivableVec
         // local acceleration of gravity
         m_localG = MoonMu / rsquared;
 
-        System.out.println("LunarSpacecraft2D: calling getTerrainAltitude...");
+        //System.out.println("LunarSpacecraft2D: calling getTerrainAltitude...");
         m_terrainAltitude = m_Terrain.getTerrainAltitude(m_theta, m_state.vec[0], m_state.vec[1]);
         m_terrainAltitudeOK = true;
         
-        System.out.println("LunarSpacecraft2D: calling getTerrainNormalAngle...");
+        //System.out.println("LunarSpacecraft2D: calling getTerrainNormalAngle...");
         m_terrainNormalAngle = m_Terrain.getTerrainNormalAngle(m_state.vec[0], m_state.vec[1]);
-        System.out.println("LunarSpacecraft2D: finished getTerrainNormalAngle...");
+        //System.out.println("LunarSpacecraft2D: finished getTerrainNormalAngle...");
 
         if (m_status != Status.InFlight)
         {
@@ -471,15 +471,13 @@ public class LunarSpacecraft2D implements IDerivableVec
         }
         else
         {
-            //m_VVM = GetTotalMass() * ((m_vr * m_vr) / (2 * this.m_TargetRadius - LanderUtils.MoonRadius - m_landingAltitude) + m_localG)
-            //    / (m_maxMdot * m_Ve);
             m_VVM = GetTotalMass() * ((m_vr * m_vr) / (2 * m_terrainAltitude - m_landingAltitude) + m_localG)
                 / (m_maxMdot * m_Ve);
         }
 
         if (m_TargetSet)
         {
-            System.out.println("LunarSpacecraft2D: calling absAngleDifference...");
+            //System.out.println("LunarSpacecraft2D: calling absAngleDifference...");
             m_DistanceToTarget = LanderUtils.absAngleDifference(m_TargetLong, m_theta) * MoonRadius;
         }
         else
@@ -580,7 +578,8 @@ public class LunarSpacecraft2D implements IDerivableVec
 
     // ================================================================
     // Compute the time derivative of the state vector.
-    // Given [x y a x' y' a'] at time t, return approximated
+    // Given [x y a x' y' a'] at time t, 
+    // return approximated
     // [x' y' a' x'' y'' a''] at time t+h
     // if supplied with a vector to use as the return value, use it;
     // otherwise, allocate it.
@@ -785,9 +784,13 @@ public class LunarSpacecraft2D implements IDerivableVec
 			else
 			{
 			    if (Math.cos(m_pitch) > 0.0)
+			    {
 			        m_AutopilotRotSetPoint = Math.asin(bodyForceSum / throttleForce);
+			    }
 			    else 
+			    {
 			        m_AutopilotRotSetPoint = Math.PI - Math.asin(bodyForceSum / throttleForce);
+			    }
 			}
 		}
     }

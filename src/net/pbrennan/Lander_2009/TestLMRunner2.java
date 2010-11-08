@@ -20,12 +20,29 @@ import java.awt.FlowLayout;
 public class TestLMRunner2 extends JFrame implements Runnable
 {
     /**
-	 *
-	 */
-	private static final long serialVersionUID = 2959138309093055826L;
-	public static void main(String[] arg)
+     *
+     */
+    private static final long serialVersionUID = 2959138309093055826L;
+    
+    /**
+     * Desired frame rate
+     * 
+     * NOTE: These two MUST be kept in sync with each other!
+     */
+    public static final int TARGET_FRAME_RATE = 60;
+    private static final long gSleepTimeMS = (int)(Math.floor(1000 / TARGET_FRAME_RATE));
+    private static final double gTickTimeSeconds = gSleepTimeMS / 1000.0;  
+    
+    /**
+     * main
+     * @param arg
+     */
+    public static void main(String[] arg)
     {
         TestLMRunner2 instance = new TestLMRunner2(arg);
+        
+        System.out.println("gSleepTimeMS = " + gSleepTimeMS);
+        System.out.println("gTickTimeSeconds = " + gTickTimeSeconds);
 
         instance.start();
     }
@@ -258,7 +275,7 @@ public class TestLMRunner2 extends JFrame implements Runnable
                 }
 
                 //System.out.println("TestLMRunner2.run: ticking model...");
-                m_runner.tick(0.05);
+                m_runner.tick(gTickTimeSeconds); // TODO: Configurable frame rate
                 //System.out.println("TestLMRunner2.run: Done ticking model...");
 
                 if (!paused_lastFrame)
@@ -297,12 +314,12 @@ public class TestLMRunner2 extends JFrame implements Runnable
                     
                     m_sideview.setHelpDisplay(help_thisFrame);
                     
-                    System.out.println("TestLMRunner2.run: Repainting...");
+                    //System.out.println("TestLMRunner2.run: Repainting...");
                     
                     m_sideview.repaint();
                 }
                 
-                Thread.sleep(50);
+                Thread.sleep(gSleepTimeMS); // TODO: Configurable frame rate
             }
         }
         catch (Exception e)

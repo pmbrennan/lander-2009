@@ -251,7 +251,7 @@ public class Terrain
             index -= nIndices;
         }
         
-        System.out.println("Terrain.getTerrainNormalAngle: index = " + index);
+        //System.out.println("Terrain.getTerrainNormalAngle: index = " + index);
         return normAngleArray[index];
     }
 

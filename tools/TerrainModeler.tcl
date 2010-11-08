@@ -13,7 +13,9 @@
 #
 # Initialization : show the console and destroy any existing display.
 #
-console show
+# This only works for Windows?
+#
+#console show
 
 #######################################################################
 #
@@ -1159,12 +1161,24 @@ catch { destroy .display }
 catch { destroy .toplabel }
 label .toplabel -bg black -fg white -justify left -text {Welcome to Terrain Modeler}
 canvas .display -bg black
+canvas .buttons -bg black -height 20
+button .buttons.btn1 -text {Button 1} -command { puts "Button 1" }
+button .buttons.btn2 -text {Button 2} -command { puts "Button 2" }
+button .buttons.btn3 -text {Button 3} -command { puts "Button 3" }
+button .buttons.btn4 -text {Button 4} -command { puts "Button 4" }
+button .buttons.btn5 -text {Button 5} -command { puts "Button 5" }
 
 # Assign the widgets to the grid
+grid .buttons.btn1 .buttons.btn2 .buttons.btn3 .buttons.btn4 .buttons.btn5 -sticky nsew
+
 grid .toplabel -padx 2 -pady 1 -sticky nsew
 grid .display -padx 2 -pady 1 -sticky nsew
+grid .buttons -padx 2 -pady 1 -sticky nsew
 grid columnconfigure . 0 -weight 1
-grid rowconfigure . 1 -weight 1
+grid rowconfigure . 1 -weight 100
+grid rowconfigure . 2 -weight 0
+
+
 
 # Ensure that the display widget gets mouse wheel events.
 focus .display
@@ -1208,6 +1222,7 @@ bind .display <Motion> {
     set txt [ format \
       {X = %%3d     Y = %%3d     x = %%0.3f     y = %%0.3f     long = %%0.5f (%%0.5f)     alt = %%0.3f     scale = %%0.3f m/pix %%s} \
       %x %y $wx $wy $long $longdeg $alt $::ViewScale_mpp $dragStatus ]
+    set txt "$txt\nLeftButton:Info MiddleButton:CenterViewpoint RightButton:RotateCorrect PgUp:ZoomIn PgDn:ZoomOut Space:InsertPt Del:DeletePt"
 
     .toplabel configure -text $txt
 
@@ -1295,8 +1310,6 @@ bind .display <ButtonPress-2> {
 # Rearrange the display angle to be correct for the location.
 #
 bind .display <ButtonPress-3> {
-    #puts "ButtonPress-3"
-
     foreach {wx wy} [screenToWorld %x %y] {}
     set dispang [expr {atan2($wy,$wx)} - $::pi_over_2]
     setViewAngle $dispang
@@ -1309,12 +1322,12 @@ bind .display <Double-Button-1> {
 
 #######################################################################
 #
-# Mouse Wheel
+# Mouse Wheel (Windows only)
 #
 # Mouse wheel Zooms in (up) and out (down)
 #
 bind .display <MouseWheel> {
-    #puts "MouseWheel %D"
+    puts "MouseWheel %D"
 
     set wheel [expr {abs(%D)}]
 
@@ -1341,7 +1354,7 @@ bind .display <MouseWheel> {
 #
 # PgUp key zooms the viewport in.
 #
-bind .display <KeyRelease-Prior> {
+bind .display <KeyRelease-KP_Prior> {
     zoom 1.1
     redraw
 }
@@ -1352,7 +1365,7 @@ bind .display <KeyRelease-Prior> {
 #
 # PgDn key zooms the viewport out.
 #
-bind .display <KeyRelease-Next> {
+bind .display <KeyRelease-KP_Next> {
     zoom 0.9
     redraw
 }
@@ -1362,8 +1375,7 @@ bind .display <KeyRelease-Next> {
 # Enable this to see the key symbol for a new key you want to add
 # a binding for.
 #
-#bind .display <KeyRelease> { puts "%K" }
-
+bind .display <KeyRelease> { puts "keysym = %K keycode = %k" }
 
 #######################################################################
 #
@@ -1442,6 +1454,9 @@ proc reload {} {
     resetView
 }
 
+######################################################################
+#
+# 
 proc save {} {
     writeModelToFile ::M "terrain001.csv"
 }

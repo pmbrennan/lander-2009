@@ -28,7 +28,7 @@ public class SideView4 extends JPanel implements ILMInstrumentDataListener, ILME
      *
      */
     private static final long serialVersionUID = 6118089846830900268L;
-    private static final boolean DISPLAY_PERFORMANCE_DATA = false;
+    private static final boolean DISPLAY_PERFORMANCE_DATA = true;
     private static final boolean PAINT_TERRAIN = true;
     private static final boolean USE_DIGITAL_FONT = true;
     private static final boolean ADVANCED_DISPLAY = true;
@@ -115,6 +115,8 @@ public class SideView4 extends JPanel implements ILMInstrumentDataListener, ILME
     
     void Init(int width, int height)
     {   
+        //getRealElapsedTime();
+        
         setDimensions(width, height);        
         
         setBackground(Color.black);
@@ -1077,6 +1079,7 @@ public class SideView4 extends JPanel implements ILMInstrumentDataListener, ILME
             }
         }
         
+        // Elapsed time (simulated)
         m_sb.setLength(0);
         m_sb.append(" TIME   : ");
         double time_sec = m_data.GetTime();
@@ -1088,6 +1091,20 @@ public class SideView4 extends JPanel implements ILMInstrumentDataListener, ILME
         m_sb.append(":");
         double time_seconds = Math.floor(time_sec % 60.0);
         m_sb.append(m_format2.format(time_seconds));
+        
+        // Elapsed time (real)
+        m_sb.append(" [");
+        time_sec = getRealElapsedTime();
+        time_hours = Math.floor(time_sec / 3600.0);
+        m_sb.append(m_format2.format(time_hours));
+        m_sb.append(":");
+        time_minutes = Math.floor((time_sec % 3600.0) / 60.0);
+        m_sb.append(m_format2.format(time_minutes));
+        m_sb.append(":");
+        time_seconds = Math.floor(time_sec % 60.0);
+        m_sb.append(m_format2.format(time_seconds));
+        m_sb.append("]");        
+        
         g.setColor(GREEN);
         g.drawString(m_sb.toString(), x, y);
 
@@ -1132,6 +1149,20 @@ public class SideView4 extends JPanel implements ILMInstrumentDataListener, ILME
         }
         g.setColor(GREEN);
         g.drawString(m_sb.toString(), x, y);
+    }
+
+    private double mStartupSeconds = 0.0;
+    private double getRealElapsedTime() 
+    {
+        long msSinceEpoch = System.currentTimeMillis();
+        double secondsSinceEpoch = ((double)msSinceEpoch) / 1000.0;
+        
+        if (mStartupSeconds == 0.0)
+        {
+            mStartupSeconds = secondsSinceEpoch;
+        }
+        
+        return (secondsSinceEpoch - mStartupSeconds);
     }
 
     public void paintComponent(Graphics g)
