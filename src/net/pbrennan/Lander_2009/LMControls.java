@@ -7,8 +7,6 @@ public class LMControls implements KeyListener
 {
     public LMControls()
     {
-        //m_bindings.add(new ControlBinding(KeyEvent.VK_Z,            ControlAction.TURN_LEFT));
-        //m_bindings.add(new ControlBinding(KeyEvent.VK_X,            ControlAction.TURN_RIGHT));
         m_bindings.add(new ControlBinding(KeyEvent.VK_LEFT,         ControlAction.TURN_LEFT));
         m_bindings.add(new ControlBinding(KeyEvent.VK_RIGHT,        ControlAction.TURN_RIGHT));
         m_bindings.add(new ControlBinding(KeyEvent.VK_OPEN_BRACKET, ControlAction.RCS_LEFT));
@@ -32,6 +30,8 @@ public class LMControls implements KeyListener
         m_bindings.add(new ControlBinding(KeyEvent.VK_F1,           ControlAction.HELP));
         m_bindings.add(new ControlBinding(KeyEvent.VK_P,            ControlAction.TOGGLE_AUTOPILOT));
         m_bindings.add(new ControlBinding(KeyEvent.VK_O,            ControlAction.CYCLE_AUTOPILOT_MODE));
+	m_bindings.add(new ControlBinding(KeyEvent.VK_Z,            ControlAction.TARGET_DECREMENT_LONG));
+	m_bindings.add(new ControlBinding(KeyEvent.VK_X,            ControlAction.TARGET_INCREMENT_LONG));
         m_bindings.add(new ControlBinding(KeyEvent.VK_S,            ControlAction.PRINT_STATUS));
         describeKeyBindings();
     }

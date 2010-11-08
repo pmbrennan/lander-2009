@@ -45,6 +45,14 @@ public enum ControlAction
         ("Thrust smart toggle",
         "If main engine thrust is not zero, kill thrust.  If main engine thrust is zero, apply full thrust."),
 
+    TARGET_INCREMENT_LONG
+	("Increment Target Longitude",
+	 "Increase the longitude of the target point"),
+
+    TARGET_DECREMENT_LONG
+	("Decrement Target Longitude",
+	 "Decrease the longitude of the target point"),
+
     RCS_LEFT
         ("RCS Translate Left",
          "Apply RCS Translation thrusters left"),

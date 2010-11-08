@@ -998,6 +998,26 @@ proc drawXY {w model} {
     set YMin 0
     set YMax [winfo height $w]
 
+    # Draw the 0-degree line
+    foreach {x1 y1} [worldToScreen 0 0] {}
+    foreach {x2 y2} [worldToScreen $::rMoon 0] {}
+    $w create line $x1 $y1 $x2 $y2 -fill "blue"
+
+    # Draw the datum circle
+    set moonRadiusPixels [expr {$::rMoon * $::ViewScale_ppm}]
+    foreach {originx originy} [worldToScreen 0 0] {}
+    set x1 [expr {$originx - $moonRadiusPixels}]
+    set y1 [expr {$originy - $moonRadiusPixels}]
+    set x2 [expr {$originx + $moonRadiusPixels}]
+    set y2 [expr {$originy + $moonRadiusPixels}]
+    $w create oval $x1 $y1 $x2 $y2 -outline "blue"
+
+    # Draw the center lines
+    set XMiddle [expr {$XMax * 0.5}]
+    set YMiddle [expr {$YMax * 0.5}]
+    $w create line 0 $YMiddle $XMax $YMiddle -fill "red"
+    $w create line $XMiddle 0 $XMiddle $YMax -fill "red"
+
     ###########################
     # Draw the terrain contours
     set idx 0
@@ -1038,19 +1058,6 @@ proc drawXY {w model} {
     }
     $w create line $x2 $y2 $firstx $firsty -fill "white"
 
-    # Draw the 0-degree line
-    foreach {x1 y1} [worldToScreen 0 0] {}
-    foreach {x2 y2} [worldToScreen $::rMoon 0] {}
-    $w create line $x1 $y1 $x2 $y2 -fill "blue"
-
-    # Draw the datum circle
-    set moonRadiusPixels [expr {$::rMoon * $::ViewScale_ppm}]
-    foreach {originx originy} [worldToScreen 0 0] {}
-    set x1 [expr {$originx - $moonRadiusPixels}]
-    set y1 [expr {$originy - $moonRadiusPixels}]
-    set x2 [expr {$originx + $moonRadiusPixels}]
-    set y2 [expr {$originy + $moonRadiusPixels}]
-    $w create oval $x1 $y1 $x2 $y2 -outline "blue"
 }
 
 #######################################################################
@@ -1162,14 +1169,17 @@ catch { destroy .toplabel }
 label .toplabel -bg black -fg white -justify left -text {Welcome to Terrain Modeler}
 canvas .display -bg black
 canvas .buttons -bg black -height 20
-button .buttons.btn1 -text {Button 1} -command { puts "Button 1" }
-button .buttons.btn2 -text {Button 2} -command { puts "Button 2" }
-button .buttons.btn3 -text {Button 3} -command { puts "Button 3" }
-button .buttons.btn4 -text {Button 4} -command { puts "Button 4" }
-button .buttons.btn5 -text {Button 5} -command { puts "Button 5" }
+
+set buttonsGridCmd "grid "
+for {set bnum 1} {$bnum <= 10} {incr bnum} {
+    button .buttons.btn$bnum -text "Button $bnum" -command "puts \"Button $bnum\""
+    append buttonsGridCmd ".buttons.btn$bnum "
+}
+append buttonsGridCmd "-sticky nsew"
 
 # Assign the widgets to the grid
-grid .buttons.btn1 .buttons.btn2 .buttons.btn3 .buttons.btn4 .buttons.btn5 -sticky nsew
+#eval {grid .buttons.btn1 .buttons.btn2 .buttons.btn3 .buttons.btn4 .buttons.btn5 -sticky nsew}
+eval $buttonsGridCmd
 
 grid .toplabel -padx 2 -pady 1 -sticky nsew
 grid .display -padx 2 -pady 1 -sticky nsew
@@ -1220,9 +1230,9 @@ bind .display <Motion> {
     }
 
     set txt [ format \
-      {X = %%3d     Y = %%3d     x = %%0.3f     y = %%0.3f     long = %%0.5f (%%0.5f)     alt = %%0.3f     scale = %%0.3f m/pix %%s} \
+      {X = %%3d     Y = %%3d     x = %%0.3f     y = %%0.3f    long = %%0.5f (%%0.5f)     alt = %%0.3f     scale = %%0.3f m/pix %%s} \
       %x %y $wx $wy $long $longdeg $alt $::ViewScale_mpp $dragStatus ]
-    set txt "$txt\nLeftButton:Info MiddleButton:CenterViewpoint RightButton:RotateCorrect PgUp:ZoomIn PgDn:ZoomOut Space:InsertPt Del:DeletePt"
+    set txt "$txt\nLeftButton:Info    MiddleButton:CenterViewpoint    RightButton:RotateCorrect    PgUp:ZoomIn    PgDn:ZoomOut    Space:InsertPt    Del:DeletePt"
 
     .toplabel configure -text $txt
 
