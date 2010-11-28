@@ -30,13 +30,11 @@ public class LMControls implements KeyListener
         m_bindings.add(new ControlBinding(KeyEvent.VK_F1,           ControlAction.HELP));
         m_bindings.add(new ControlBinding(KeyEvent.VK_P,            ControlAction.TOGGLE_AUTOPILOT));
         m_bindings.add(new ControlBinding(KeyEvent.VK_O,            ControlAction.CYCLE_AUTOPILOT_MODE));
-	m_bindings.add(new ControlBinding(KeyEvent.VK_Z,            ControlAction.TARGET_DECREMENT_LONG));
-	m_bindings.add(new ControlBinding(KeyEvent.VK_X,            ControlAction.TARGET_INCREMENT_LONG));
+        m_bindings.add(new ControlBinding(KeyEvent.VK_Z,            ControlAction.TARGET_DECREMENT_LONG));
+        m_bindings.add(new ControlBinding(KeyEvent.VK_X,            ControlAction.TARGET_INCREMENT_LONG));
         m_bindings.add(new ControlBinding(KeyEvent.VK_S,            ControlAction.PRINT_STATUS));
         describeKeyBindings();
     }
-
-
 
     public void keyPressed(KeyEvent e) {
         ControlAction action = findBinding(e.getKeyCode());
@@ -78,6 +76,14 @@ public class LMControls implements KeyListener
             case TRIM:
                 m_trim = true;
             break;
+            
+            case TARGET_INCREMENT_LONG:
+                m_increment_target_raw = true;
+                break;
+                
+            case TARGET_DECREMENT_LONG:
+                m_decrement_target_raw = true;
+                break;
         }
         computeCommands();
     }
@@ -202,6 +208,14 @@ public class LMControls implements KeyListener
                 m_zoom_full = false;
                 m_zoom_lm_moon = true;
             break;
+            
+            case TARGET_INCREMENT_LONG:
+                m_increment_target_raw = false;
+                break;
+                
+            case TARGET_DECREMENT_LONG:
+                m_decrement_target_raw = false;
+                break;
             
             case HELP:
                 m_help = true;
@@ -450,6 +464,36 @@ public class LMControls implements KeyListener
             {
                 m_toggle_autopilot = false;
             }
+            
+            // TODO: why isn't this working the way I want?
+            int target_change = 0;
+            if (m_increment_target_raw)
+            {
+                target_change++;
+            }
+            
+            if (m_decrement_target_raw)
+            {
+                target_change--;
+            }
+            
+            if (target_change == 1)
+            {
+                System.out.println("increment target");
+                m_increment_target = true;
+                m_decrement_target = false;
+            }
+            else if (target_change == -1)
+            {
+                System.out.println("decrement target");
+                m_decrement_target = true;
+                m_increment_target = false;
+            }
+            else
+            {
+                m_increment_target = false;
+                m_decrement_target = false;
+            }
         }
 
         if (m_cycle_interface_level)
@@ -604,11 +648,13 @@ public class LMControls implements KeyListener
     protected   boolean     m_toggle_rotation_mode_raw;
     protected   boolean     m_cycle_autopilot_mode_raw;
     protected   boolean     m_toggle_autopilot_raw;
+    protected   boolean     m_increment_target_raw;
+    protected   boolean     m_decrement_target_raw;
 
     // final outputs
-    protected   double      m_yaw_rate; // degrees/sec, positive = ccw, negative = cw
-    protected   double      m_rcs_rate; // m/s/s, positive = right, negative = left
-    protected   double      m_throttle_rate; // 0.0-1.0 per second
+    protected   double      m_yaw_rate = 0.0; // degrees/sec, positive = ccw, negative = cw
+    protected   double      m_rcs_rate = 0.0; // m/s/s, positive = right, negative = left
+    protected   double      m_throttle_rate = 0.0; // 0.0-1.0 per second
     protected   ThrottleCmd   m_throttle_cmd = ThrottleCmd.NONE;
     protected   boolean     m_landing_radar_on = true;
     protected   int         m_time_acceleration = 1;
@@ -626,6 +672,8 @@ public class LMControls implements KeyListener
     protected   boolean     m_zoom_full = false;
     protected   boolean     m_zoom_all = false;
     protected   boolean     m_zoom_lm_moon = false;
+    protected   boolean     m_increment_target = false; // rate depends on spacecraft horizontal speed
+    protected   boolean     m_decrement_target = false; // rate depends on spacecraft horizontal speed
 
     // bindings from keyboard to actions.
     private ArrayList<ControlBinding> m_bindings = new ArrayList<ControlBinding>(20);

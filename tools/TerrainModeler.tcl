@@ -1,3 +1,5 @@
+#! /usr/bin/wish
+
 #######################################################################
 #
 # TerrainModeler.tcl
@@ -1480,8 +1482,6 @@ proc rdrAlt { latDegrees dtmAltitude } {
     set terrainAlt [lindex [getAltAt $::M $latRadians] 0]
     return [expr {$dtmAltitude - $terrainAlt}]
 }
-
-
 
 tkwait visibility .display
 reload

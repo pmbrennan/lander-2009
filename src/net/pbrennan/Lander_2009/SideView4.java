@@ -130,7 +130,8 @@ public class SideView4 extends JPanel implements ILMInstrumentDataListener, ILME
         {
             //m_font = new Font("Digital Dream Skew Narrow", Font.PLAIN, 14);
             m_font = new Font("Digital Dream Narrow", Font.PLAIN, 14);
-            m_helpFont = new Font("Digital Dream Fat", Font.BOLD, 16);
+            //m_helpFont = new Font("Digital Dream Fat", Font.BOLD, 16);
+            m_helpFont = new Font("Digital Dream Fat", Font.BOLD, 14);
             m_OPIFont = new Font("Arial", Font.PLAIN, 12);
             m_EventFont = new Font("Digital Dream Narrow", Font.PLAIN, 12);
         }
@@ -1479,7 +1480,7 @@ public class SideView4 extends JPanel implements ILMInstrumentDataListener, ILME
         drawMultilineText(g, "\nPress ESC or F1 to return to the game.", bgx + 5, nexty, GREEN);
 
         g2d.setColor(HELPEDGE);
-        for (int i=0; i<10 ; ++i)
+        for (int i=0; i<5 ; ++i)
         {
             g2d.draw3DRect(bgx-i, bgy-i, helpWidth + i * 2, helpHeight + i * 2, true);
         }
