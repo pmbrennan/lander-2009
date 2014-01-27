@@ -133,9 +133,9 @@ Still TODO:
 - Abort logic
 - Welcome screen
 - A decent installer.
-- Port to another target?
-  - C++ / DirectX?
-  - Flash?
+- Port to another target
+  - Android?
+  - HTML5?
 - Tooltips or other kind of help for the display
 - anything else? 
 
