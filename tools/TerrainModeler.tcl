@@ -1051,8 +1051,8 @@ proc drawXY {w model} {
             append tagname $idx
 
             $w create rectangle \
-                [expr {$x2 - 5}] [expr {$y2 - 5}] \
-                [expr {$x2 + 5}] [expr {$y2 + 5}] \
+                [expr {$x2 - 4}] [expr {$y2 - 4}] \
+                [expr {$x2 + 4}] [expr {$y2 + 4}] \
                 -fill "green" -tag $tagname
         }
 
@@ -1226,7 +1226,7 @@ bind .display <Motion> {
 
     if {$::DragPointIndex != -1} {
         set dragStatus "(dragging Point $::DragPointIndex)"
-        .display coords $::DragPointTag [list [expr {%x - 5}] [expr {%y - 5}] [expr {%x + 5}] [expr {%y + 5}]]
+        .display coords $::DragPointTag [list [expr {%x - 4}] [expr {%y - 4}] [expr {%x + 4}] [expr {%y + 4}]]
     } else {
         set dragStatus ""
     }
@@ -1261,7 +1261,7 @@ bind .display <ButtonRelease-1> {
 
     if {$::DragPointIndex != -1} {
         set dragDist [expr {abs(%x - $::DragStartX) + abs(%y - $::DragStartY)}]
-        if {$dragDist > 5} {
+        if {$dragDist > 4} {
             foreach {wx wy} [screenToWorld %x %y] {}
             set newpoint [fromXY $wx $wy]
             replacePoint ::M $::DragPointIndex $newpoint

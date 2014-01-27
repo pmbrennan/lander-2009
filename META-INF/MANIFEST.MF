@@ -1,2 +1,4 @@
-Manifest-Version: 2.3
-Main-Class: "net/pbrennan/Lander_2009/TestLMRunner2"
+Manifest-Version: 1.0
+Sealed: true
+Main-Class: net.pbrennan.Lander_2009.TestLMRunner2
+
